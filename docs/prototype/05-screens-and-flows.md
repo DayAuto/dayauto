@@ -14,6 +14,8 @@ PC 웹 기준 (1280×720 이상). 한국어 UI. 디자인은 shadcn/ui(Base UI) 
 `/` 진입 시 분기: 비로그인 → `/login` / 시간대 0개 → `/setup/windows` / 활성 목표 0개 → `/setup/goals` / 그 외 메인.
 메인 상단에 [시간대 수정] [목표 관리] 링크를 둔다.
 
+로그인 확인은 **proxy 없이** 각 페이지(서버 컴포넌트)의 `auth()`로 하고 미로그인이면 `redirect("/login")`한다 (06 문서 N-03). DB를 읽는 페이지는 동적 렌더링이다.
+
 ## 2. 로그인 (`/login`) — REQ-OB-01
 
 - Google provider 스코프: `openid email profile https://www.googleapis.com/auth/calendar.events.readonly`
@@ -111,7 +113,7 @@ PC 웹 기준 (1280×720 이상). 한국어 UI. 디자인은 shadcn/ui(Base UI) 
 
 ## 6. 서버 계층 구성
 
-- `src/server/actions/*.ts` (`"use server"`): 세션 확인 → 서비스 호출 → `revalidatePath("/")`. 비즈니스 로직 없음.
+- `src/server/actions/*.ts` (`"use server"`, 1행 `"use server"` / 2행 `import "server-only"`, N-02): **모든 액션의 첫 동작은 `auth()`로 로그인 확인**(N-03) → 서비스 호출 → `revalidatePath("/")`. 비즈니스 로직 없음. 타입·상수는 별도 파일.
 - `src/server/services/*.ts`: DB 읽기 → 엔진 호출 → DB 쓰기를 **하나의 트랜잭션**으로. 엔진 입력 변환(Prisma 모델 → 엔진 타입)도 여기서.
 - `src/server/calendar/google.ts`: `listWeekEvents(userId, range)` — Account에서 토큰 읽기, 만료 시 `https://oauth2.googleapis.com/token`으로 갱신, `GET https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin&timeMax&singleEvents=true&showDeleted=true&maxResults=250` (페이지네이션 처리), 10초 타임아웃.
 - 캘린더 범위는 **primary 캘린더 하나**.

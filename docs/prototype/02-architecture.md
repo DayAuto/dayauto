@@ -15,7 +15,7 @@
 | 영역      | 선택                                                             | 비고                                                                         |
 | --------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | 인증      | Auth.js v5 (`next-auth@beta`) + Google provider + Prisma adapter | `access_type=offline`, `prompt=consent`로 refresh token 확보. 세션은 DB 세션 |
-| DB        | PostgreSQL (Supabase) + Prisma                                   | Supabase는 **DB 호스팅만** 사용 (Supabase Auth 미사용)                       |
+| DB        | PostgreSQL (Supabase) + Prisma 7 + `@prisma/adapter-pg`          | Supabase는 **DB 호스팅만** 사용 (Supabase Auth 미사용)                       |
 | 시간      | `date-fns` + `date-fns-tz`                                       | 타임존 계산 직접 구현 금지                                                   |
 | 캘린더 UI | `react-big-calendar` (date-fns localizer, 월요일 시작)           | React 19 호환 문제가 있으면 FullCalendar로 대체하고 06 문서에 기록           |
 | 구글 API  | `fetch`로 Calendar REST 직접 호출                                | `googleapis` 패키지는 무겁고 필요 기능이 events.list 하나뿐                  |
@@ -24,7 +24,9 @@
 
 **설치하지 않는 것**: AI SDK, LLM SDK, Resend, PostHog, Sentry, googleapis.
 
-> 패키지 버전은 설치 시점의 최신 안정판을 쓰되, **Prisma·Auth.js는 설치된 버전의 공식 문서 기준으로 설정**할 것. (Prisma 7은 `prisma.config.ts`·드라이버 어댑터 등 설정 방식이 이전과 다름)
+> **패키지 버전은 고정한다** (06 문서 §4 N-01): `next-auth@5.0.0-beta.32`, `@auth/prisma-adapter@2.11.3`, `prisma`·`@prisma/client`·`@prisma/adapter-pg`는 모두 `7.10.1`(npm `latest` 태그가 RC(8.x)이므로 RC 설치 금지), `date-fns@4`, `date-fns-tz@3`, `react-big-calendar@1.20` + `@types/react-big-calendar`. **Prisma·Auth.js는 설치된 버전의 공식 문서 기준으로 설정**할 것. (Prisma 7은 `prisma.config.ts`·드라이버 어댑터 등 설정 방식이 이전과 다름)
+>
+> CI(`ci.yml`)는 수정하지 않는다. `postinstall`에서 `prisma generate`를 실행하고, `DATABASE_URL`이 없는 CI에서도 generate·typecheck·build가 통과해야 한다. DB를 읽는 페이지는 동적 렌더링으로 둔다 (N-05).
 
 ## 3. 폴더 구조 (목표)
 
@@ -36,7 +38,6 @@ prisma/
 docs/prototype/seed/curriculum.sample.json   # 시드 원본 (seed.ts가 읽음)
 src/
 ├── auth.ts                      # Auth.js 설정 (Google, Prisma adapter, 스코프)
-├── proxy.ts                     # (필요 시) 로그인 보호. Next 16 문서 확인 후 작성
 ├── app/
 │   ├── api/auth/[...nextauth]/route.ts
 │   ├── login/page.tsx
@@ -71,6 +72,10 @@ src/
 ```
 
 `src/server/llm/index.ts`와 `src/app/api/cron/route.ts`는 **건드리지 않는다** (프로토타입 범위 밖, 기존 자리 유지).
+
+**`proxy.ts`는 만들지 않는다** (N-03). 로그인 확인은 서버 컴포넌트와 모든 Server Action의 `auth()`로만 한다. DB 세션이라 proxy에서는 쿠키 존재 여부만 볼 수 있어 보호 효과가 약하다.
+
+**`"use server"` 파일 규칙** (N-02): 1행 `"use server";`, 2행 `import "server-only";`. (AGENTS.md의 "첫 줄 server-only"는 `"use server"` 지시어가 import보다 앞에 있어야 하므로 이 파일들에 한해 2행으로 한다.) `"use server"` 파일은 async 함수만 export할 수 있으므로 타입·상수는 별도 파일(`src/server/actions/types.ts` 등)에 둔다.
 
 ## 4. 데이터 흐름
 
@@ -109,11 +114,13 @@ src/
 
 ## 7. 사람이 미리 해야 하는 외부 준비 (Claude Code는 할 수 없음)
 
-| 항목             | 내용                                                                                                                                                                        |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase         | 프로젝트 생성 → `DATABASE_URL`(pooler, `?pgbouncer=true`)과 `DIRECT_URL`(직접 연결)을 `.env.local`에                                                                        |
-| Google Cloud     | 프로젝트 생성 → **Google Calendar API 사용 설정** → OAuth 동의 화면(외부, **테스트 모드**) → 스코프에 `calendar.events.readonly` 추가 → **테스트 사용자에 팀원 Gmail 등록** |
-| OAuth 클라이언트 | 유형 "웹 애플리케이션", 승인된 리디렉션 URI `http://localhost:3000/api/auth/callback/google` → ID/Secret을 `AUTH_GOOGLE_ID/SECRET`에                                        |
-| AUTH_SECRET      | `npx auth secret` 또는 임의 32바이트 base64                                                                                                                                 |
+| 항목             | 내용                                                                                                                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase         | 프로젝트 생성 → **Session pooler(5432) 연결 문자열**을 `DATABASE_URL`에 (`?pgbouncer=true` 쓰지 않음, N-04). `DIRECT_URL`은 Prisma 7 설정 확인 후 필요 없으면 제거 (P2에서 확정) |
+| Google Cloud     | 프로젝트 생성 → **Google Calendar API 사용 설정** → OAuth 동의 화면(외부, **테스트 모드**) → 스코프에 `calendar.events.readonly` 추가 → **테스트 사용자에 팀원 Gmail 등록**      |
+| OAuth 클라이언트 | 유형 "웹 애플리케이션", 승인된 리디렉션 URI `http://localhost:3000/api/auth/callback/google` → ID/Secret을 `AUTH_GOOGLE_ID/SECRET`에                                             |
+| AUTH_SECRET      | `npx auth secret` 또는 임의 32바이트 base64                                                                                                                                      |
 
 테스트 모드에서는 민감 스코프 검증 없이 등록된 테스트 사용자(최대 100명)만 로그인 가능하다. 시연 계정을 반드시 테스트 사용자에 넣을 것.
+
+**테스트 모드의 refresh token은 7일 뒤 만료된다.** 시연 1~2일 전에 반드시 재로그인한다 (08 체크리스트, N-07). 시연 환경은 **로컬(`http://localhost:3000`)** 이며 배포는 범위 밖이다 (N-06).

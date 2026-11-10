@@ -73,7 +73,8 @@ docs/prototype/ 문서와 git log를 확인해서 어느 단계까지 끝났는�
 ```
 [P3] Auth.js v5로 구글 로그인을 붙이고 캘린더 동기화 서비스를 만들어.
 - 05 문서 §2의 스코프와 authorization params(access_type=offline, prompt=consent). DB 세션 + Prisma adapter.
-- 로그인 보호가 필요하면 Next 16 문서를 확인해서 proxy.ts로 작성 (middleware.ts 아님).
+- proxy.ts는 만들지 않는다 (06 문서 N-03). 로그인 확인은 서버 컴포넌트와 모든 액션의 auth()로만.
+- 재로그인 시 Account 토큰이 갱신되는지 Auth.js 소스로 먼저 확인하고, 안 되면 signIn 이벤트에서 access/refresh token과 expires_at을 직접 갱신 (N-07). 확인 결과를 보고에 포함.
 - src/server/clock.ts의 getNow() (DEMO_NOW 지원, 02 문서 §5). .env.example에 DEMO_NOW 주석 추가.
 - src/server/calendar/google.ts: 05 문서 §6 사양 (토큰 갱신, 페이지네이션, 10초 타임아웃, 오류 구분).
 - src/server/services/sync.ts: 02 문서 §4 흐름의 1~5단계와 ensureWeekSynced(). 구글 응답 → 엔진 입력 변환은 04 문서 §5.1 표대로. 한 트랜잭션으로 저장하고 결과 요약(추가/변경/삭제/겹침/생성된 제안 수)을 반환.
