@@ -61,7 +61,7 @@ docs/prototype/ 문서와 git log를 확인해서 어느 단계까지 끝났는�
 
 ```
 [P2] 03-data-model.md대로 Prisma를 세팅해.
-- 설치된 Prisma 버전 공식 문서 기준으로 설정 (Supabase: DATABASE_URL은 pooler, DIRECT_URL은 마이그레이션용).
+- 설치된 Prisma 버전 공식 문서 기준으로 설정 (Supabase: DATABASE_URL 하나만 쓴다 — Session pooler 5432, 런타임은 @prisma/adapter-pg, 마이그레이션은 prisma.config.ts. DIRECT_URL 없음, N-04).
 - Auth.js Prisma adapter 표준 모델 + 03 문서의 모델. ERD 대비 변경점 C1~C5를 반영해.
 - src/server/db.ts에 Prisma client 싱글턴 (import "server-only").
 - prisma/seed.ts: docs/prototype/seed/curriculum.sample.json을 읽어 Exam·ExamSession·CurriculumUnit을 멱등 upsert. package.json에 db:migrate, db:seed, db:reset 스크립트 추가.

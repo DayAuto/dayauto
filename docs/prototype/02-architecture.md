@@ -110,16 +110,16 @@ src/
 # DEMO_NOW=2026-11-30T09:00:00+09:00
 ```
 
-기존 키 중 프로토타입이 쓰는 것: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`. 나머지는 비워 둬도 동작해야 한다.
+기존 키 중 프로토타입이 쓰는 것: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`. 나머지는 비워 둬도 동작해야 한다.
 
 ## 7. 사람이 미리 해야 하는 외부 준비 (Claude Code는 할 수 없음)
 
-| 항목             | 내용                                                                                                                                                                             |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase         | 프로젝트 생성 → **Session pooler(5432) 연결 문자열**을 `DATABASE_URL`에 (`?pgbouncer=true` 쓰지 않음, N-04). `DIRECT_URL`은 Prisma 7 설정 확인 후 필요 없으면 제거 (P2에서 확정) |
-| Google Cloud     | 프로젝트 생성 → **Google Calendar API 사용 설정** → OAuth 동의 화면(외부, **테스트 모드**) → 스코프에 `calendar.events.readonly` 추가 → **테스트 사용자에 팀원 Gmail 등록**      |
-| OAuth 클라이언트 | 유형 "웹 애플리케이션", 승인된 리디렉션 URI `http://localhost:3000/api/auth/callback/google` → ID/Secret을 `AUTH_GOOGLE_ID/SECRET`에                                             |
-| AUTH_SECRET      | `npx auth secret` 또는 임의 32바이트 base64                                                                                                                                      |
+| 항목             | 내용                                                                                                                                                                        |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase         | 프로젝트 생성 → **Session pooler(5432) 연결 문자열**을 `DATABASE_URL`에 (`?pgbouncer=true` 쓰지 않음). `DIRECT_URL`은 쓰지 않는다 (N-04)                                    |
+| Google Cloud     | 프로젝트 생성 → **Google Calendar API 사용 설정** → OAuth 동의 화면(외부, **테스트 모드**) → 스코프에 `calendar.events.readonly` 추가 → **테스트 사용자에 팀원 Gmail 등록** |
+| OAuth 클라이언트 | 유형 "웹 애플리케이션", 승인된 리디렉션 URI `http://localhost:3000/api/auth/callback/google` → ID/Secret을 `AUTH_GOOGLE_ID/SECRET`에                                        |
+| AUTH_SECRET      | `npx auth secret` 또는 임의 32바이트 base64                                                                                                                                 |
 
 테스트 모드에서는 민감 스코프 검증 없이 등록된 테스트 사용자(최대 100명)만 로그인 가능하다. 시연 계정을 반드시 테스트 사용자에 넣을 것.
 
