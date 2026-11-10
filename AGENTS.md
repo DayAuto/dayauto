@@ -17,3 +17,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 비밀값은 `.env.local`과 배포 플랫폼 환경변수로만 관리하고 커밋하지 않는다.
 - 커밋 메시지: `feat/fix/chore/docs/test: 내용` (한글 가능)
 - shadcn/ui는 Base UI 기반으로 설치됨. Radix 기반 예제 코드를 그대로 쓰지 말고 기존 src/components/ui의 패턴을 따를 것. 클래스 병합은 cn 패키지 사용
+
+## 프로토타입 작업 (11/30 시연)
+
+- 프로토타입 관련 작업은 먼저 `docs/prototype/README.md`를 읽고, 그 문서의 범위·명세·결정 기록을 따른다.
+- 문서에 없는 결정을 하면 `docs/prototype/06-decisions-and-open-issues.md` §4에 기록한다.
