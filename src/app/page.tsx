@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { MainView, type ServerError } from "@/components/main-view";
 import { toActionError } from "@/server/actions/result";
+import { getDb } from "@/server/db";
 import { ensureWeekAllocated } from "@/server/services/allocation";
+import { loadWindows } from "@/server/services/engine-input";
 import { getMainData } from "@/server/services/main-data";
 import { getSetupStatus } from "@/server/services/setup";
 
@@ -26,5 +28,7 @@ export default async function Home() {
   }
 
   const data = await getMainData(userId);
-  return <MainView data={data} serverError={serverError} />;
+  // 주간표 표시 범위·마이크로 묶음용 생활 시간대 (읽기 전용 조회)
+  const windows = await loadWindows(getDb(), userId);
+  return <MainView data={data} windows={windows} serverError={serverError} />;
 }

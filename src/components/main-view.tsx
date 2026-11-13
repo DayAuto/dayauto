@@ -10,7 +10,7 @@ import {
   SyncLog,
   type SyncLogEntry,
 } from "@/components/side-panel";
-import { WeekCalendar } from "@/components/week-calendar";
+import { WeekCalendar, type CalWindow } from "@/components/week-calendar";
 import { formatMonthDay, formatTime } from "@/lib/format";
 import { loginWithGoogle, logout } from "@/server/actions/auth";
 import {
@@ -39,9 +39,11 @@ export interface ServerError {
 
 export function MainView({
   data,
+  windows,
   serverError,
 }: {
   data: MainData;
+  windows: CalWindow[];
   serverError: ServerError | null;
 }) {
   const router = useRouter();
@@ -159,7 +161,11 @@ export function MainView({
 
       <div className="flex min-h-0 flex-1">
         <main className="min-w-0 flex-1 overflow-auto p-3">
-          <WeekCalendar data={data} highlightProposalId={highlight} />
+          <WeekCalendar
+            data={data}
+            windows={windows}
+            highlightProposalId={highlight}
+          />
         </main>
         <aside className="flex w-80 shrink-0 flex-col gap-6 overflow-y-auto border-l border-border p-4">
           <section className="flex flex-col gap-3">
