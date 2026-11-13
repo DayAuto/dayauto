@@ -4,26 +4,14 @@ import { listWeekEvents } from "@/server/calendar/google";
 import { getNow } from "@/server/clock";
 import { getDb } from "@/server/db";
 import {
-  buildProposal,
-  buildReason,
-  calendarDaysUntil,
-  computeUrgencies,
   diffEvents,
   findConflicts,
   getWeekRange,
-  localDateOf,
-  sortGoals,
   type FetchedEvent,
-  type Interval,
   type StoredEvent,
 } from "@/server/engine";
-import {
-  loadEngineGoals,
-  loadWeekAssignments,
-  loadWeekEventRows,
-  loadWindows,
-  toBusyInput,
-} from "./engine-input";
+import { loadWeekAssignments, loadWeekEventRows } from "./engine-input";
+import { draftProposal, saveProposal } from "./proposal-builder";
 
 export interface SyncSummary {
   /** 새 일정 */
@@ -121,25 +109,16 @@ export async function syncCalendar(
 
       // 4) 추가·변경 일정만 겹침 검사 (삭제는 기록만, D-06/D-07)
       const assignments = await loadWeekAssignments(tx, userId, weekRange);
-      const eventRows = await loadWeekEventRows(tx, userId, weekRange);
-      const externalEvents = eventRows.map(toBusyInput);
-      const windows = await loadWindows(tx, userId);
-      const { goals, titles } = await loadEngineGoals(tx, userId);
-      const today = localDateOf(now, tz);
+      const planned = assignments.filter((a) => a.status === "PLANNED");
 
       let conflicts = 0;
       let proposalsCreated = 0;
-      const planned = assignments.filter((a) => a.status === "PLANNED");
-      const goalOrder = sortGoals(
-        computeUrgencies({ goals, windows, today }),
-      ).map((u) => u.goalId);
-
       for (const { event, id: eventRowId } of changedRows) {
         const conflicted = findConflicts(event, planned, now);
         if (conflicted.length === 0) continue;
         conflicts += conflicted.length;
 
-        // 같은 트리거의 PENDING 제안은 SUPERSEDED, 다른 PENDING 제안의 목표 시간은 예약
+        // 같은 트리거의 PENDING 제안은 SUPERSEDED (D: 트리거당 PENDING 최대 1개)
         await tx.proposal.updateMany({
           where: {
             userId,
@@ -148,59 +127,21 @@ export async function syncCalendar(
           },
           data: { status: "SUPERSEDED", decidedAt: now },
         });
-        const pending = await tx.proposal.findMany({
-          where: { userId, status: "PENDING" },
-          include: { items: true },
-        });
-        const reserved: Interval[] = pending
-          .flatMap((p) => p.items)
-          .filter((i) => i.toStartAt && i.toEndAt)
-          .map((i) => ({ start: i.toStartAt!, end: i.toEndAt! }));
 
-        const draft = buildProposal({
-          conflicted,
-          goalsOrder: goalOrder,
-          windows,
-          externalEvents,
-          assignments,
-          reserved,
-          excluded: {},
+        // 5) 조정안 생성 (다른 PENDING 제안의 목표 시간은 예약으로 존중)
+        const result = await draftProposal(tx, {
+          userId,
           now,
-          tz,
+          conflicted,
+          excluded: {},
+          triggerTitle: event.title,
         });
-        if (!draft) continue;
-
-        const examDateById = new Map(goals.map((g) => [g.id, g.examDate]));
-        const reason = buildReason({
-          eventTitle: event.title,
-          goals: draft.meta.byGoal.map((g) => ({
-            title: titles.get(g.goalId) ?? "목표",
-            daysLeft: calendarDaysUntil(
-              today,
-              examDateById.get(g.goalId) ?? today,
-            ),
-          })),
-          totalCount: draft.meta.conflictedCount,
-          unscheduledCount: draft.meta.unscheduledCount,
-        });
-
-        await tx.proposal.create({
-          data: {
-            userId,
-            triggerExternalEventId: eventRowId,
-            reason,
-            items: {
-              create: draft.items.map((it) => ({
-                assignmentId: it.assignmentId,
-                fromStartAt: it.fromStartAt,
-                fromEndAt: it.fromEndAt,
-                toStartAt: it.toStartAt,
-                toEndAt: it.toEndAt,
-                toAvailabilityWindowId: it.toWindowId,
-                toWindowKind: it.toWindowKind,
-              })),
-            },
-          },
+        if (!result) continue;
+        await saveProposal(tx, {
+          userId,
+          now,
+          triggerExternalEventId: eventRowId,
+          result,
         });
         proposalsCreated += 1;
       }

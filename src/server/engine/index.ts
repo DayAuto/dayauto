@@ -7,4 +7,11 @@ export * from "./allocate";
 export * from "./changes";
 export * from "./reallocate";
 export * from "./reason";
-export { ceilDiv, overlaps, CHUNK_MINUTES, CHUNK_MS } from "./util";
+export {
+  ceilDiv,
+  overlaps,
+  busyIntervals,
+  occupiedIntervals,
+  CHUNK_MINUTES,
+  CHUNK_MS,
+} from "./util";
