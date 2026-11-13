@@ -34,6 +34,11 @@ const seed = JSON.parse(
   ),
 ) as { exams: SeedExam[] };
 
+// SCENARIO_LOG=1 npx vitest run scenario --disable-console-intercept 로 배분표·조정안을 출력한다
+const log = (text: string) => {
+  if (process.env.SCENARIO_LOG) console.log(text);
+};
+
 const goalTitles = new Map<string, string>();
 const taskInfo = new Map<
   string,
@@ -103,7 +108,7 @@ describe("시연 재현 (11/30 월요일 09:00 KST)", () => {
       (a) => a.slotType === "FOCUS" && fmt(a.startAt).startsWith("11-30"),
     );
     expect(monFocus.length).toBeGreaterThan(0);
-    console.log(
+    log(
       "[월요일 배분표]\n" +
         planned
           .filter((a) => fmt(a.startAt).startsWith("11-30"))
@@ -164,7 +169,7 @@ describe("시연 재현 (11/30 월요일 09:00 KST)", () => {
     expect(reason).toContain("'팀 회식'");
 
     const byAssign = new Map(planned.map((a) => [a.id, a]));
-    console.log(
+    log(
       `[조정안]\n${reason}\n` +
         draft.items
           .map((it) => {
