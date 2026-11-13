@@ -1,0 +1,194 @@
+{
+  "_note": "프로토타입 시드용 샘플. 단원·분량·회차 날짜 모두 검수 전 가안이며, 팀이 LLM으로 생성·검수한 커리큘럼과 실제 회차로 교체한다. sortOrder는 units 배열 순서(1부터)로 부여한다. taskType 값은 03-data-model.md §3 표를 따른다.",
+  "exams": [
+    {
+      "name": "토익(TOEIC)",
+      "sessions": [
+        { "name": "(가상) 2026년 12월 정기", "examDate": "2026-12-20" },
+        { "name": "(가상) 2027년 1월 정기", "examDate": "2027-01-24" }
+      ],
+      "units": [
+        {
+          "subject": "LC",
+          "unitName": "듣기 기초 어휘 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "LC",
+          "unitName": "Part 1 사진 묘사 유형 학습",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "LC",
+          "unitName": "Part 2 질의응답 유형 학습",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "LC",
+          "unitName": "Part 2 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "LC",
+          "unitName": "Part 3·4 대화·담화 세트 풀이",
+          "taskType": "SET_PRACTICE",
+          "estimatedChunks": 12
+        },
+        {
+          "subject": "RC",
+          "unitName": "Part 5 문법 핵심 개념",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "RC",
+          "unitName": "Part 5 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 10
+        },
+        {
+          "subject": "RC",
+          "unitName": "비즈니스 어휘 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "RC",
+          "unitName": "Part 6 장문 빈칸 세트 풀이",
+          "taskType": "SET_PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "RC",
+          "unitName": "Part 7 독해 세트 풀이",
+          "taskType": "SET_PRACTICE",
+          "estimatedChunks": 12
+        },
+        {
+          "subject": "공통",
+          "unitName": "실전 오답 확인",
+          "taskType": "REVIEW",
+          "estimatedChunks": 6
+        }
+      ]
+    },
+    {
+      "name": "산업안전기사 필기",
+      "sessions": [{ "name": "(가상) 2027년 1회", "examDate": "2027-02-14" }],
+      "units": [
+        {
+          "subject": "산업재해 예방 및 안전보건교육",
+          "unitName": "산업재해 예방 계획·안전보건관리 체제",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "산업재해 예방 및 안전보건교육",
+          "unitName": "1과목 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "산업재해 예방 및 안전보건교육",
+          "unitName": "보호구·안전보건표지 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "인간공학 및 위험성 평가·관리",
+          "unitName": "인간공학·시스템 위험성 분석",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "인간공학 및 위험성 평가·관리",
+          "unitName": "2과목 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "인간공학 및 위험성 평가·관리",
+          "unitName": "위험성 평가 용어 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "기계·기구 및 설비 안전관리",
+          "unitName": "기계 위험요인·방호장치",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "기계·기구 및 설비 안전관리",
+          "unitName": "3과목 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "기계·기구 및 설비 안전관리",
+          "unitName": "방호장치 기준 수치 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "전기설비 안전관리",
+          "unitName": "감전·정전기·방폭 개념",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "전기설비 안전관리",
+          "unitName": "4과목 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "전기설비 안전관리",
+          "unitName": "전기 안전 기준 수치 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "화학설비 안전관리",
+          "unitName": "위험물·화재폭발·화학설비 안전",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "화학설비 안전관리",
+          "unitName": "5과목 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "화학설비 안전관리",
+          "unitName": "위험물 분류·폭발범위 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 4
+        },
+        {
+          "subject": "건설공사 안전관리",
+          "unitName": "가설구조물·굴착·양중 안전",
+          "taskType": "CONCEPT",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "건설공사 안전관리",
+          "unitName": "6과목 기출 낱문제 풀이",
+          "taskType": "PRACTICE",
+          "estimatedChunks": 8
+        },
+        {
+          "subject": "건설공사 안전관리",
+          "unitName": "건설 안전 기준 수치 암기",
+          "taskType": "MEMORIZE",
+          "estimatedChunks": 4
+        }
+      ]
+    }
+  ]
+}

@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# prisma generated client (postinstall에서 생성)
+/src/generated/prisma
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

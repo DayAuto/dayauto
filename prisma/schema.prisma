@@ -1,0 +1,263 @@
+// 03-data-model.md 기준. Auth.js Prisma adapter 표준 모델 + 프로토타입 도메인 모델.
+// ERD 대비 변경점 C1~C5 반영: SET_PRACTICE, ProposalItem.to* nullable, UNSCHEDULED, toAvailabilityWindowId/toWindowKind, ExternalEvent.isBusy
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- 열거형 ----------
+
+enum TaskType {
+  CONCEPT
+  SET_PRACTICE
+  PRACTICE
+  REVIEW
+  MEMORIZE
+  UNKNOWN
+}
+
+enum SlotType {
+  MICRO
+  FOCUS
+}
+
+enum WindowKind {
+  COMMUTE_TO_WORK
+  LUNCH
+  COMMUTE_FROM_WORK
+  AFTER_WORK
+}
+
+enum GoalStatus {
+  ACTIVE
+  ON_HOLD
+  EXPIRED
+}
+
+enum AssignmentStatus {
+  PLANNED
+  DONE
+  MISSED
+  UNSCHEDULED
+}
+
+enum ExternalEventStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  SUPERSEDED
+}
+
+// ---------- Auth.js 표준 모델 ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  timezone            String               @default("Asia/Seoul")
+  lastSyncedAt        DateTime?
+  availabilityWindows AvailabilityWindow[]
+  externalEvents      ExternalEvent[]
+  goals               Goal[]
+  proposals           Proposal[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- 시드 데이터 ----------
+
+model Exam {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  sessions        ExamSession[]
+  curriculumUnits CurriculumUnit[]
+  goals           Goal[]
+}
+
+model ExamSession {
+  id       String   @id @default(cuid())
+  examId   String
+  exam     Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  name     String
+  examDate DateTime @db.Date
+  goals    Goal[]
+
+  @@unique([examId, examDate])
+}
+
+model CurriculumUnit {
+  id              String   @id @default(cuid())
+  examId          String
+  exam            Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject         String
+  unitName        String
+  taskType        TaskType
+  estimatedChunks Int
+  sortOrder       Int
+  tasks           Task[]
+
+  @@unique([examId, sortOrder])
+}
+
+// ---------- 사용자 데이터 ----------
+
+model Goal {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examId            String?
+  exam              Exam?        @relation(fields: [examId], references: [id])
+  examSessionId     String?
+  examSession       ExamSession? @relation(fields: [examSessionId], references: [id])
+  title             String
+  examDate          DateTime     @db.Date
+  priority          Int          @default(100) // 작을수록 높음. 프로토타입은 입력받지 않음
+  status            GoalStatus   @default(ACTIVE)
+  urgency           Float? // 표시·기록용. 정렬은 엔진의 정수 비교로
+  urgencyComputedAt DateTime?
+  createdAt         DateTime     @default(now())
+  tasks             Task[]
+}
+
+model Task {
+  id               String          @id @default(cuid())
+  goalId           String
+  goal             Goal            @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  curriculumUnitId String?
+  curriculumUnit   CurriculumUnit? @relation(fields: [curriculumUnitId], references: [id], onDelete: SetNull)
+  subject          String
+  unitName         String
+  taskType         TaskType
+  slotType         SlotType
+  minChunks        Int
+  maxChunks        Int
+  estimatedChunks  Int
+  sortOrder        Int
+  assignments      Assignment[]
+}
+
+model AvailabilityWindow {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        WindowKind
+  startMinute Int // 0~1440, 15의 배수, start < end (애플리케이션 검증)
+  endMinute   Int
+  slotType    SlotType
+  weekdays    Int[] // 0=일 ~ 6=토, 최소 1개
+  assignments Assignment[]
+}
+
+model ExternalEvent {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  googleEventId   String
+  title           String
+  startAt         DateTime
+  endAt           DateTime
+  isAllDay        Boolean
+  isBusy          Boolean             @default(true) // C5
+  status          ExternalEventStatus @default(ACTIVE)
+  googleUpdatedAt DateTime
+  lastSeenAt      DateTime
+  proposals       Proposal[]
+
+  @@unique([userId, googleEventId])
+}
+
+model Assignment {
+  id                   String              @id @default(cuid())
+  taskId               String
+  task                 Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  availabilityWindowId String?
+  availabilityWindow   AvailabilityWindow? @relation(fields: [availabilityWindowId], references: [id], onDelete: SetNull)
+  windowKind           WindowKind
+  startAt              DateTime
+  endAt                DateTime
+  chunkCount           Int
+  splitIndex           Int                 @default(0)
+  status               AssignmentStatus    @default(PLANNED)
+  isCarryOver          Boolean             @default(false)
+  proposalItems        ProposalItem[]
+
+  @@index([startAt])
+}
+
+model Proposal {
+  id                     String         @id @default(cuid())
+  userId                 String
+  user                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  triggerExternalEventId String?
+  triggerExternalEvent   ExternalEvent? @relation(fields: [triggerExternalEventId], references: [id], onDelete: SetNull)
+  replacedById           String?        @unique
+  replacedBy             Proposal?      @relation("ProposalReplacement", fields: [replacedById], references: [id])
+  replaces               Proposal?      @relation("ProposalReplacement")
+  status                 ProposalStatus @default(PENDING)
+  reason                 String
+  createdAt              DateTime       @default(now())
+  decidedAt              DateTime?
+  items                  ProposalItem[]
+}
+
+model ProposalItem {
+  id                     String      @id @default(cuid())
+  proposalId             String
+  proposal               Proposal    @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  assignmentId           String
+  assignment             Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  fromStartAt            DateTime
+  fromEndAt              DateTime
+  toStartAt              DateTime? // C2: null = 이번 주 배치 불가 → 배정 해제
+  toEndAt                DateTime?
+  toAvailabilityWindowId String? // C4
+  toWindowKind           WindowKind? // C4
+}
