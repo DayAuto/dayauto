@@ -155,6 +155,20 @@ describe("allocateWeek", () => {
     expect(r.unmet).toEqual([{ goalId: "g", slotType: "FOCUS", chunks: 8 }]); // 이월량은 잔여(8)를 넘지 않는다
   });
 
+  it("시간대가 없는 날(주말)에는 할당량이 이월로 쌓이지 않아 정상 주간에 unmet이 없다 (N-18)", () => {
+    const r = allocateWeek(
+      base({
+        goals: [
+          goal("g", "2026-12-14", [
+            task("f", "FOCUS", 20),
+            task("m", "MICRO", 10, { sortOrder: 2 }),
+          ]),
+        ],
+      }),
+    );
+    expect(r.unmet).toEqual([]);
+  });
+
   it("배정끼리 겹치지 않고 slotType에 맞는 시간대에만 놓인다", () => {
     const r = allocateWeek(
       base({

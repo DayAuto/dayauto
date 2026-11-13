@@ -5,6 +5,7 @@ import {
   getWeekRange,
   localDateOf,
   weekDates,
+  weekdayOfDate,
 } from "./time";
 import { computeUrgencies, sortGoals, type GoalUrgency } from "./urgency";
 import {
@@ -83,10 +84,16 @@ export function allocateWeek(input: AllocateInput): AllocateResult {
   }
 
   const assignments: NewAssignment[] = [];
+  const hasWindowOn = (date: string, s: SlotType) =>
+    windows.some(
+      (w) => w.slotType === s && w.weekdays.includes(weekdayOfDate(date)),
+    );
 
   for (const date of weekDates(weekRange, tz).filter((d) => d >= today)) {
     for (const u of ordered) {
       for (const s of SLOT_TYPES) {
+        // 그 요일에 이 slotType 시간대가 없으면 할당량도 이월도 생기지 않는다 (가용일 기준, N-18)
+        if (!hasWindowOn(date, s)) continue;
         const k = key(u.goalId, s);
         const tasks = queue.get(k)!;
         const remainingSum = () =>
